@@ -5,8 +5,8 @@ const client = new SteamUser();
 The Login Details for the Bot
 */
 const logOnOptions = {
-  accountName: 'brendenwoosh',
-  password: 'brandon95123'
+  accountName: 'psn_mattisgaismurf',
+  password: 'luisisreallygay'
 };
 
 
