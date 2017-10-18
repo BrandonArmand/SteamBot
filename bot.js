@@ -1,14 +1,14 @@
 const SteamUser = require('steam-user');
 const client = new SteamUser();
+const config = require('./config.js')
 
 /* logOnOptions
 The Login Details for the Bot
 */
 const logOnOptions = {
-  accountName: 'brendenwoosh',
-  password: 'brandon95123'
+  accountName: config.accountName,
+  password: config.password
 };
-
 
 /* accountUser
 The Object for each user in the chat containing their
@@ -48,17 +48,14 @@ var accountUser = function(name, sid, money = 100, level = 1) {
 };
 
 /* accounts
-  an array for every steam account participating in the
+  an array for every steam account participating in the actions.
+  every message the bot recieves will add the User to the accounts list
+  ,but if you would like to have a preset list of accounts to have so that
+  Users will be auto invited everytime they go online without haveing never
+  messaged the bot, add a 'new accountUser(Username, SteamID)' to the array
 */
-var accounts = [new accountUser('StacheOG', 'STEAM_0:0:42734832'),
-                new accountUser('Swag', 'STEAM_0:0:54814970'),
-                new accountUser('Mr.Fish-Go-Moo', 'STEAM_0:1:52931588'),
-                new accountUser('Breezey','STEAM_0:0:99513268'),
-                new accountUser('whorunbartertown','STEAM_0:1:97478055'),
-                new accountUser('Mondough','STEAM_0:0:83306746'),
-                new accountUser('Mr.Mish Fo Goo | kickback.com','STEAM_0:1:88052725'),
-                new accountUser('Hacker Faggot','STEAM_0:0:117464167'),
-                new accountUser('MIKEY','STEAM_0:1:129833392')];
+var accounts = []; // [new accountUser('testUser', 'STEAM_0:0:1234'),
+                  //   new accountUser('testPlayer', 'STEAM_0:0:1234')]
 
 /* logOn
   logs in the Bot
@@ -67,8 +64,8 @@ client.logOn(logOnOptions);
 client.on('loggedOn', () => {
   console.log('logged into steam');
 
-  client.setPersona(SteamUser.Steam.EPersonaState.Max, 'Sick AF BOT');
-  client.joinChat('103582791441497183');
+  client.setPersona(SteamUser.Steam.EPersonaState.Max, config.botName);
+  client.joinChat(config.groupId);
 });
 
 
@@ -176,13 +173,13 @@ client.on('chatMessage', (room, sender, message) => {
             client.chatMessage(room, attacker + " CRITICAL HIT " + found.name + " for " + hitResult);
           }
           else if (getRandom(1,20) == 1) {
-            var hitResult = attackerX.level != undefined ? getRandom(-10, -1) * attackerX.level: getRandom(10, 20);
+            var hitResult = attackerX.level != undefined ? getRandom(-10, -1).toFixed(0) * attackerX.level: getRandom(-10, -1);
             found.healthLoss = found.healthLoss + hitResult;
             found.updateHealth();
             client.chatMessage(room, attacker + " CRITICAL FAIL " + found.name + " for " + hitResult);
           }
           else {
-            var hitResult = attackerX.level != undefined ? getRandom(0, 10) * attackerX.level: getRandom(10, 20);
+            var hitResult = attackerX.level != undefined ? getRandom(0, 10) * attackerX.level: getRandom(0, 10);
             found.healthLoss = found.healthLoss + hitResult;
             found.updateHealth();
             client.chatMessage(room, attacker + " HIT " + found.name + " for " + hitResult);
@@ -264,7 +261,28 @@ client.on('chatMessage', (room, sender, message) => {
   }
 
   if(command.toLowerCase().search('!clear') != -1){
-    clear();
+    clear(room);
+  }
+
+  if(command.toLowerCase().search('!roll') != -1){
+    if(command.length > 6){
+      var roll = command.slice(6);
+      var rollLength = roll.length - 1;
+      var rollInt = parseInt(roll);
+        if(!rollInt){
+          rollInt = parseFloat(roll);
+          if(!rollInt){
+            client.chatMessage(room, 'Choose a number to roll');
+          }
+          else {
+            roll = rollInt;
+            client.chatMessage(room, getRandom(0, roll).toFixed(rollLength) + "");
+          }
+        }
+        else{
+          client.chatMessage(room, getRandom(0, roll).toFixed(0) + "");
+        }
+    }
   }
 
 });
@@ -273,12 +291,7 @@ client.on('chatUserJoined', (room, user) => {
   client.getPersonas([user], function(personas) {
     var persona = personas[user];
     var name = persona ? persona.player_name : ("[" + user.getSteamID64() + "]");
-    if(name != 'Breezey'){
-      client.chatMessage(room, 'Welcome ' + name + "! Type !Help for help");
-    }
-    else {
-      client.chatMessage(room, 'Fuck Mark');
-    }
+    client.chatMessage(room, 'Welcome ' + name + "! Type !Help for help");
     console.log(name + " joined the chat");
 
     addUser(name, user);
@@ -312,7 +325,7 @@ client.on('user', (sid, user) => {
     && accounts[i].inGroup != true){
 
       console.log(user.online_session_instances + " .. " + user.player_name + ' - ' + user.persona_state);
-      client.inviteToChat('103582791441497183', accounts[i].steamid);
+      client.inviteToChat(config.groupId, accounts[i].steamid);
       console.log('invited ' + accounts[i].name);
       accounts[i].invited = true;
     }
@@ -335,7 +348,7 @@ client.on('user', (sid, user) => {
   }
 });
 
-var clear = function(){
+var clear = function(room){
   var clear = '';
   for(var i = 0; i < 50; i++){
     clear = clear + '\n';
@@ -371,9 +384,14 @@ var addUser = function(name, user, joined = true){
 }
 
 var getRandom = function(min, max) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  if(max > 1) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  else{
+    return Math.random() * (max - min) + min;
+  }
 }
 
 var helpPrompt = function(room){
@@ -394,6 +412,8 @@ var helpPrompt = function(room){
   + '                                         • (changes my game to any real (via appID), or fake(anything) game)' + "\n"
   + '                                              • EX) !Game 730 starts up CSGO' + "\n"
   + '                                              • EX) !Game Swag starts up a non-steam game, Swag' + "\n"
+  + '                                    • !Roll "a number to roll"' + "\n"
+  + '                                         • (Rolls a die between 1 and any number you chose)' + "\n"
   + '                                    • !Clear' + "\n"
   + '                                         • (clears the chat room of messages)' + "\n"
   + 'Commands are no longer case sensitive' + "\n"
