@@ -1,6 +1,7 @@
 # SteamBot
 A simple moderator Bot for steam built with Node
-To setup the bot for yourself, you don't have to do any work,
+
+to setup the bot for yourself, you don't have to do any work!
 * just open the config.js
 * put your steam info there
 ```
