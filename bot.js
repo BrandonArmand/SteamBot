@@ -110,9 +110,6 @@ client.on('friendMessage', (steamid, message) => {
 client.on('chatMessage', (room, sender, message) => {
   var command = message;
 
-
-
-
   client.getPersonas([sender], function(personas) {
     var persona = personas[sender];
     var user = persona ? persona.player_name : ("[" + sender + "]");
